@@ -52,6 +52,7 @@ namespace SteamCollectionDownloadSizeCalculator
 			await CalculateSize();
 
 			Console.WriteLine("Program terminated. Thanks for using it :D");
+			Console.ReadLine();
 		}
 
 		/// <summary>
