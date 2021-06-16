@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace SteamCollectionDownloadSizeCalculator
 {
@@ -22,16 +23,35 @@ namespace SteamCollectionDownloadSizeCalculator
             Console.WriteLine("-----------------------------------------");
             Console.WriteLine("Steam Collection Download Size Calculator");
             Console.WriteLine("-----------------------------------------");
+
             Console.WriteLine("");
+
             Console.WriteLine("Please provide a Workshop object ID (this can also be an addon).");
             Console.WriteLine("Example: \"https://steamcommunity.com/sharedfiles/filedetails/?id=1448345830\" or just \"1448345830\".");
-            Console.Write("=> ");
 
             retry:
 
+            Console.WriteLine("");
+
+            Console.Write("=> ");
+
             requestedID = Console.ReadLine().Trim();
+            Console.WriteLine("");
 
             if (string.IsNullOrWhiteSpace(requestedID))
+            {
+                Console.WriteLine("Assessment error. Please enter an identifier.");
+                goto retry;
+            }
+
+            // We check if the identifier is a number.
+            var match = Regex.Match(requestedID, "[0-9]+");
+
+            if (match.Success)
+            {
+                requestedID = match.Value;
+            }
+            else
             {
                 Console.WriteLine("Assessment error. Please enter a valid identifier.");
                 goto retry;
@@ -44,12 +64,14 @@ namespace SteamCollectionDownloadSizeCalculator
 
             if (identifiers.Count == 0)
             {
-                Console.WriteLine("This object doesn't contain any elements. Program terminated.");
-                return;
+                Console.WriteLine("This object doesn't contain any elements");
+                goto terminate;
             }
 
             // Then we iterate to calculate the total size.
             await CalculateSize();
+
+            terminate:
 
             Console.WriteLine("Program terminated. Thanks for using it :D");
             Console.ReadLine();
