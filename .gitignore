@@ -1,5 +1,6 @@
 # VSCode and more
 .vscode
+.vs
 bin
 obj
 *.user
