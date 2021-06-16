@@ -10,7 +10,7 @@ namespace SteamCollectionDownloadSizeCalculator
 	class Program
 	{
 		static string requestedID;
-        static List<string> identifiers = new List<string>();
+		static List<string> identifiers = new List<string>();
 		static readonly HttpClient client = new HttpClient();
 
 		/// <summary>
@@ -40,13 +40,13 @@ namespace SteamCollectionDownloadSizeCalculator
 			// We retrieve all the identifiers of the collection.
 			await RequestSteamAPI();
 
-            identifiers = identifiers.Distinct().ToList();
+			identifiers = identifiers.Distinct().ToList();
 
-            if (identifiers.Count == 0)
-            {
-                Console.WriteLine("This object doesn't contain any elements. Program terminated.");
-                return;
-            }
+			if (identifiers.Count == 0)
+			{
+				Console.WriteLine("This object doesn't contain any elements. Program terminated.");
+				return;
+			}
 
 			// Then we iterate to calculate the total size.
 			await CalculateSize();
