@@ -11,10 +11,10 @@ namespace SteamCollectionDownloadSizeCalculator
 {
     class Program
     {
-        static string requestedID;
         static bool shouldSave = false;
+        static List<string> requestedIDs = new List<string>();
+        static List<string> retrievedIDs = new List<string>();
         static TextWriter textMirror = new StreamWriter("output.txt");
-        static List<string> identifiers = new List<string>();
         static readonly HttpClient client = new HttpClient();
 
         /// <summary>
@@ -36,15 +36,15 @@ namespace SteamCollectionDownloadSizeCalculator
         /// </summary>
         static async Task Main(string[] args)
         {
-            // We check the validity of the identifier.
+            // We ask to enter one or more identifiers.
             ConsoleLog("-----------------------------------------");
             ConsoleLog("Steam Collection Download Size Calculator");
             ConsoleLog("-----------------------------------------");
 
             ConsoleLog("");
 
-            ConsoleLog("Please provide a Workshop object ID (this can also be an addon).");
-            ConsoleLog("Example: \"https://steamcommunity.com/sharedfiles/filedetails/?id=1448345830\" or just \"1448345830\".");
+            ConsoleLog("Please provide a Workshop object identifier (you can also put several in a row by putting \";\" between each).");
+            ConsoleLog("Example: \"https://steamcommunity.com/sharedfiles/filedetails/?id=1448345830\" or \"1448345830;947461782\".");
 
             retry:
 
@@ -52,23 +52,19 @@ namespace SteamCollectionDownloadSizeCalculator
 
             Console.Write("=> ");
 
-            requestedID = Console.ReadLine().Trim();
+            var input = Console.ReadLine().Trim();
             ConsoleLog("");
 
-            if (string.IsNullOrWhiteSpace(requestedID))
+            if (string.IsNullOrWhiteSpace(input))
             {
                 ConsoleLog("Assessment error. Please enter an identifier.");
                 goto retry;
             }
 
-            // We check if the identifier is a number.
-            var match = Regex.Match(requestedID, "[0-9]+");
+            // We check if the input contains valid identifiers.
+            var matches = Regex.Matches(input, "[0-9]+");
 
-            if (match.Success)
-            {
-                requestedID = match.Value;
-            }
-            else
+            if (matches.Count == 0)
             {
                 ConsoleLog("Assessment error. Please enter a valid identifier.");
                 goto retry;
@@ -85,7 +81,6 @@ namespace SteamCollectionDownloadSizeCalculator
 
                 if (response != ConsoleKey.Enter)
                     ConsoleLog();
-
             } while (response != ConsoleKey.Y && response != ConsoleKey.N);
 
             shouldSave = response == ConsoleKey.Y;
@@ -95,21 +90,26 @@ namespace SteamCollectionDownloadSizeCalculator
 
             ConsoleLog();
 
-            // We retrieve all the identifiers of the collection.
-            await RequestSteamAPI();
-
-            identifiers = identifiers.Distinct().ToList();
-
-            if (identifiers.Count == 0)
+            // We iterate through all the results.
+            foreach (var match in matches)
             {
-                ConsoleLog("This object doesn't contain any elements");
-                goto terminate;
+                // We retrieve all the identifiers through the Steam API.
+                var identifier = match.ToString();
+
+                await RequestSteamAPI(identifier);
+
+                retrievedIDs = retrievedIDs.Distinct().ToList();
+
+                if (retrievedIDs.Count == 0)
+                {
+                    ConsoleLog($"The object \"{identifier}\" doesn't contain any element, move to the next one.");
+                }
+
+                // Then we calculate the size of the identifiers for this object.
+                await CalculateSize();
+
+                retrievedIDs.Clear();
             }
-
-            // Then we iterate to calculate the total size.
-            await CalculateSize();
-
-            terminate:
 
             ConsoleLog("Program terminated. Thanks for using it :D");
 
@@ -127,7 +127,7 @@ namespace SteamCollectionDownloadSizeCalculator
         /// <summary>
         /// Retrieves all the identifiers of a collection using the Steam "ISteamRemoteStorage" API.
         /// </summary>
-        static async Task RequestSteamAPI()
+        static async Task RequestSteamAPI(string requestedID)
         {
             try
             {
@@ -160,14 +160,14 @@ namespace SteamCollectionDownloadSizeCalculator
                             {
                                 if (item.TryGetProperty("publishedfileid", out var identifier))
                                 {
-                                    identifiers.Add(identifier.ToString());
+                                    retrievedIDs.Add(identifier.ToString());
                                 }
                             }
                         }
                         else
                         {
                             ConsoleLog("The Steam API reports that the object is a simple addon (in some cases, the identifier you entered may be invalid).");
-                            identifiers.Add(requestedID);
+                            retrievedIDs.Add(requestedID);
                         }
                     }
                 }
@@ -183,8 +183,8 @@ namespace SteamCollectionDownloadSizeCalculator
         }
 
         /// <summary>
-        /// Transforms bytes into human readable string.
-        /// https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/includes/extensions/string.lua#L257-L268 (Garry's Code ™)
+        /// Transforms bytes into a human readable string.
+        /// https://github.com/Facepunch/garrysmod/blob/87e75a6803905bbd1189f7b6f48680dc5b3beb48/garrysmod/lua/includes/extensions/string.lua#L257-L268 (Garry's Code ™)
         /// </summary>
         private static string BytesToString(ulong size)
         {
@@ -214,10 +214,10 @@ namespace SteamCollectionDownloadSizeCalculator
                 var index = 0;
                 var parameters = new Dictionary<string, string>
                 {
-                    {"itemcount", identifiers.Count.ToString()},
+                    {"itemcount", retrievedIDs.Count.ToString()},
                 };
 
-                foreach (var identifier in identifiers)
+                foreach (var identifier in retrievedIDs)
                 {
                     parameters.Add($"publishedfileids[{index}]", identifier);
                     index++;
@@ -266,6 +266,7 @@ namespace SteamCollectionDownloadSizeCalculator
                             }
 
                             ConsoleLog($"Total size: {BytesToString(total)}.");
+                            ConsoleLog();
                         }
                         else
                         {
