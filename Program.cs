@@ -103,9 +103,7 @@ namespace SteamCollectionDownloadSizeCalculator
                 retrievedIDs = retrievedIDs.Distinct().ToList();
 
                 if (retrievedIDs.Count == 0)
-                {
                     ConsoleLog($"The object \"{identifier}\" doesn't contain any element, move to the next one.");
-                }
 
                 // Then we calculate the size of the identifiers for this object.
                 await CalculateSize();
