@@ -22,6 +22,8 @@ namespace SteamCollectionDownloadSizeCalculator
         /// </summary>
         private static void ConsoleLog(string text = "", bool noNewline = false)
         {
+            text = text.Replace("\n", "");
+
             if (noNewline)
                 Console.Write(text);
             else
