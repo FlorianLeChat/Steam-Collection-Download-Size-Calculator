@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Net.Http;
@@ -11,8 +12,24 @@ namespace SteamCollectionDownloadSizeCalculator
     class Program
     {
         static string requestedID;
+        static bool shouldSave = false;
+        static TextWriter textMirror = new StreamWriter("output.txt");
         static List<string> identifiers = new List<string>();
         static readonly HttpClient client = new HttpClient();
+
+        /// <summary>
+        /// A simple method to display messages in the console and save them in a text file.
+        /// </summary>
+        private static void ConsoleLog(string text = "", bool noNewline = false)
+        {
+            if (noNewline)
+                Console.Write(text);
+            else
+                Console.WriteLine(text);
+
+            if (shouldSave)
+                textMirror.WriteLine(text);
+        }
 
         /// <summary>
         /// Main function of the program which retrieves the identifier and launches the functions to calculate the size.
@@ -20,27 +37,27 @@ namespace SteamCollectionDownloadSizeCalculator
         static async Task Main(string[] args)
         {
             // We check the validity of the identifier.
-            Console.WriteLine("-----------------------------------------");
-            Console.WriteLine("Steam Collection Download Size Calculator");
-            Console.WriteLine("-----------------------------------------");
+            ConsoleLog("-----------------------------------------");
+            ConsoleLog("Steam Collection Download Size Calculator");
+            ConsoleLog("-----------------------------------------");
 
-            Console.WriteLine("");
+            ConsoleLog("");
 
-            Console.WriteLine("Please provide a Workshop object ID (this can also be an addon).");
-            Console.WriteLine("Example: \"https://steamcommunity.com/sharedfiles/filedetails/?id=1448345830\" or just \"1448345830\".");
+            ConsoleLog("Please provide a Workshop object ID (this can also be an addon).");
+            ConsoleLog("Example: \"https://steamcommunity.com/sharedfiles/filedetails/?id=1448345830\" or just \"1448345830\".");
 
             retry:
 
-            Console.WriteLine("");
+            ConsoleLog("");
 
             Console.Write("=> ");
 
             requestedID = Console.ReadLine().Trim();
-            Console.WriteLine("");
+            ConsoleLog("");
 
             if (string.IsNullOrWhiteSpace(requestedID))
             {
-                Console.WriteLine("Assessment error. Please enter an identifier.");
+                ConsoleLog("Assessment error. Please enter an identifier.");
                 goto retry;
             }
 
@@ -53,9 +70,30 @@ namespace SteamCollectionDownloadSizeCalculator
             }
             else
             {
-                Console.WriteLine("Assessment error. Please enter a valid identifier.");
+                ConsoleLog("Assessment error. Please enter a valid identifier.");
                 goto retry;
             }
+
+            // You are asked if the console output should be saved in a text file.
+            ConsoleKey response;
+
+            do
+            {
+                Console.Write("Do you want to save the console output in a text file? [y/n] ");
+
+                response = Console.ReadKey(false).Key;
+
+                if (response != ConsoleKey.Enter)
+                    ConsoleLog();
+
+            } while (response != ConsoleKey.Y && response != ConsoleKey.N);
+
+            shouldSave = response == ConsoleKey.Y;
+
+            if (shouldSave)
+                ConsoleLog("The console output will be saved into the file \"output.txt\" in the application folder.");
+
+            ConsoleLog();
 
             // We retrieve all the identifiers of the collection.
             await RequestSteamAPI();
@@ -64,7 +102,7 @@ namespace SteamCollectionDownloadSizeCalculator
 
             if (identifiers.Count == 0)
             {
-                Console.WriteLine("This object doesn't contain any elements");
+                ConsoleLog("This object doesn't contain any elements");
                 goto terminate;
             }
 
@@ -73,7 +111,16 @@ namespace SteamCollectionDownloadSizeCalculator
 
             terminate:
 
-            Console.WriteLine("Program terminated. Thanks for using it :D");
+            ConsoleLog("Program terminated. Thanks for using it :D");
+
+            if (shouldSave)
+            {
+                ConsoleLog("Note: The output file will be automatically overwritten the next time you launch the application.");
+
+                textMirror.Flush();
+                textMirror.Close();
+            }
+
             Console.ReadLine();
         }
 
@@ -106,8 +153,8 @@ namespace SteamCollectionDownloadSizeCalculator
 
                         if (details.TryGetProperty("children", out var items))
                         {
-                            Console.WriteLine($"The Steam API reports that the object is a Workshop collection containing {items.GetArrayLength()} items.");
-                            Console.WriteLine("Beginning of calculation...");
+                            ConsoleLog($"The Steam API reports that the object is a Workshop collection containing {items.GetArrayLength()} items.");
+                            ConsoleLog("Beginning of calculation...");
 
                             foreach (var item in items.EnumerateArray())
                             {
@@ -119,14 +166,14 @@ namespace SteamCollectionDownloadSizeCalculator
                         }
                         else
                         {
-                            Console.WriteLine("The Steam API reports that the object is a simple addon (in some cases, the identifier you entered may be invalid).");
+                            ConsoleLog("The Steam API reports that the object is a simple addon (in some cases, the identifier you entered may be invalid).");
                             identifiers.Add(requestedID);
                         }
                     }
                 }
                 else
                 {
-                    Console.WriteLine("A network error occurred while requesting the Steam servers. Please try again later.");
+                    ConsoleLog("A network error occurred while requesting the Steam servers. Please try again later.");
                 }
             }
             catch (Exception error)
@@ -206,29 +253,29 @@ namespace SteamCollectionDownloadSizeCalculator
 
                                     UInt64.TryParse(item.GetProperty("file_size").ToString(), out size);
 
-                                    Console.WriteLine($"{message} {title} [{BytesToString(size)}]");
+                                    ConsoleLog($"{message} {title} [{BytesToString(size)}]");
 
                                     total += size;
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"{message} ERROR -> OBJECT IS HIDDEN OR UNAVAILABLE");
+                                    ConsoleLog($"{message} ERROR -> OBJECT IS HIDDEN OR UNAVAILABLE");
                                 }
 
                                 count++;
                             }
 
-                            Console.WriteLine($"Total size: {BytesToString(total)}.");
+                            ConsoleLog($"Total size: {BytesToString(total)}.");
                         }
                         else
                         {
-                            Console.WriteLine("It seems that the object is invalid or simply temporarily unavailable.");
+                            ConsoleLog("It seems that the object is invalid or simply temporarily unavailable.");
                         }
                     }
                 }
                 else
                 {
-                    Console.WriteLine("A network error occurred while requesting the Steam servers. Please try again later.");
+                    ConsoleLog("A network error occurred while requesting the Steam servers. Please try again later.");
                 }
             }
             catch (Exception error)
