@@ -6,4 +6,4 @@ So I thought that using the shell (without going into a GUI) and creating a smal
 
 There might be some problems/inconsistencies in the code but of course any report/pull request are welcome!
 
-![image](https://user-images.githubusercontent.com/26360935/122268694-afa6c000-cedc-11eb-976a-432bbf833d26.png)
+![image](https://user-images.githubusercontent.com/26360935/122377459-651d5600-cf65-11eb-9374-928b4536b73b.png)
