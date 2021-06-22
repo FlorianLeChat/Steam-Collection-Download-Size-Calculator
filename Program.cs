@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -19,7 +19,7 @@ namespace SteamCollectionDownloadSizeCalculator
 		/// <summary>
 		/// A simple method to display messages in the console and save them in a text file.
 		/// </summary>
-		private static void ConsoleLog(string text = "", bool noNewline = false)
+		static void ConsoleLog(string text = "", bool noNewline = false)
 		{
 			text = text.Replace("\n", "");
 
@@ -35,7 +35,7 @@ namespace SteamCollectionDownloadSizeCalculator
 		/// <summary>
 		/// Main function of the program which retrieves the identifier and launches the functions to calculate the size.
 		/// </summary>
-		static async Task Main(string[] args)
+		static async Task Main()
 		{
 			// We ask to enter one or more identifiers.
 			ConsoleLog("-----------------------------------------");
@@ -142,32 +142,27 @@ namespace SteamCollectionDownloadSizeCalculator
 
 				if (request.IsSuccessStatusCode && request.Content != null)
 				{
-					var jsonText = await request.Content.ReadAsStringAsync();
+					// Then we iterate through the whole JSON file to retrieve the identifiers.
+					var document = await JsonDocument.ParseAsync(await request.Content.ReadAsStreamAsync());
+					var details = document.RootElement.GetProperty("response").GetProperty("collectiondetails")[0];
 
-					using (var document = JsonDocument.Parse(jsonText))
+					if (details.TryGetProperty("children", out var items))
 					{
-						// Then we iterate through the whole JSON file to retrieve the identifiers.
-						var root = document.RootElement;
-						var details = root.GetProperty("response").GetProperty("collectiondetails")[0];
+						ConsoleLog($"The Steam API reports that the object is a Workshop collection containing {items.GetArrayLength()} items.");
+						ConsoleLog("Beginning of calculation...");
 
-						if (details.TryGetProperty("children", out var items))
+						foreach (var item in items.EnumerateArray())
 						{
-							ConsoleLog($"The Steam API reports that the object is a Workshop collection containing {items.GetArrayLength()} items.");
-							ConsoleLog("Beginning of calculation...");
-
-							foreach (var item in items.EnumerateArray())
+							if (item.TryGetProperty("publishedfileid", out var identifier))
 							{
-								if (item.TryGetProperty("publishedfileid", out var identifier))
-								{
-									retrievedIDs.Add(identifier.ToString());
-								}
+								retrievedIDs.Add(identifier.ToString());
 							}
 						}
-						else
-						{
-							ConsoleLog("The Steam API reports that the object is a simple addon (in some cases, the identifier you entered may be invalid).");
-							retrievedIDs.Add(requestedID);
-						}
+					}
+					else
+					{
+						ConsoleLog("The Steam API reports that the object is a simple addon (in some cases, the identifier you entered may be invalid).");
+						retrievedIDs.Add(requestedID);
 					}
 				}
 				else
@@ -185,7 +180,7 @@ namespace SteamCollectionDownloadSizeCalculator
 		/// Transforms bytes into a human readable string.
 		/// https://github.com/Facepunch/garrysmod/blob/87e75a6803905bbd1189f7b6f48680dc5b3beb48/garrysmod/lua/includes/extensions/string.lua#L257-L268 (Garry's Code ™)
 		/// </summary>
-		private static string BytesToString(ulong size)
+		static string BytesToString(ulong size)
 		{
 			if (size <= 0)
 				return "0 Byte";
@@ -228,49 +223,42 @@ namespace SteamCollectionDownloadSizeCalculator
 
 				if (request.IsSuccessStatusCode && request.Content != null)
 				{
-					var jsonText = await request.Content.ReadAsStringAsync();
+					var document = await JsonDocument.ParseAsync(await request.Content.ReadAsStreamAsync());
+					var details = document.RootElement.GetProperty("response");
 
-					using (var document = JsonDocument.Parse(jsonText))
+					// Some of the objects previously filled in may not exist so we check that.
+					if (details.TryGetProperty("publishedfiledetails", out var items))
 					{
-						var root = document.RootElement;
-						var details = root.GetProperty("response");
+						var count = 1;
+						var total = 0UL;
 
-						// Some of the objects previously filled in may not exist so we check that.
-						if (details.TryGetProperty("publishedfiledetails", out var items))
+						foreach (var item in items.EnumerateArray())
 						{
-							var count = 1;
-							var total = 0UL;
+							var identifier = item.GetProperty("publishedfileid");
+							var message = $"({count}/{index}) {identifier,-10} :";
 
-							foreach (var item in items.EnumerateArray())
+							if (item.TryGetProperty("title", out var title))
 							{
-								var identifier = item.GetProperty("publishedfileid");
-								var message = $"({count}/{index}) {identifier, -10} :";
+								var size = ulong.Parse(item.GetProperty("file_size").ToString());
 
-								if (item.TryGetProperty("title", out var title))
-								{
-									var size = 0UL;
+								ConsoleLog($"{message} {title} [{BytesToString(size)}]");
 
-									UInt64.TryParse(item.GetProperty("file_size").ToString(), out size);
-
-									ConsoleLog($"{message} {title} [{BytesToString(size)}]");
-
-									total += size;
-								}
-								else
-								{
-									ConsoleLog($"{message} ERROR -> OBJECT IS HIDDEN OR UNAVAILABLE");
-								}
-
-								count++;
+								total += size;
+							}
+							else
+							{
+								ConsoleLog($"{message} ERROR -> OBJECT IS HIDDEN OR UNAVAILABLE");
 							}
 
-							ConsoleLog($"Total size: {BytesToString(total)}.");
-							ConsoleLog();
+							count++;
 						}
-						else
-						{
-							ConsoleLog("It seems that the object is invalid or simply temporarily unavailable.");
-						}
+
+						ConsoleLog($"Total size: {BytesToString(total)}.");
+						ConsoleLog();
+					}
+					else
+					{
+						ConsoleLog("It seems that the object is invalid or simply temporarily unavailable.");
 					}
 				}
 				else
