@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -12,10 +12,9 @@ namespace SteamCollectionDownloadSizeCalculator
 	class Program
 	{
 		static bool shouldSave = false;
-		static List<string> requestedIDs = new List<string>();
-		static List<string> retrievedIDs = new List<string>();
-		static TextWriter textMirror = new StreamWriter("output.txt");
-		static readonly HttpClient client = new HttpClient();
+		static List<string> retrievedIDs = new();
+		static readonly HttpClient client = new();
+		static readonly TextWriter textMirror = new StreamWriter("output.txt");
 
 		/// <summary>
 		/// A simple method to display messages in the console and save them in a text file.
