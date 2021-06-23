@@ -9,17 +9,17 @@ using System.Text.RegularExpressions;
 
 namespace SteamCollectionDownloadSizeCalculator
 {
-	class Program
+	internal class Program
 	{
-		static bool shouldSave = false;
-		static List<string> retrievedIDs = new();
-		static readonly HttpClient client = new();
-		static readonly TextWriter textMirror = new StreamWriter("output.txt");
+		private static bool shouldSave;
+		private static List<string> retrievedIDs = new();
+		private static readonly HttpClient client = new();
+		private static readonly TextWriter textMirror = new StreamWriter("output.txt");
 
 		/// <summary>
 		/// A simple method to display messages in the console and save them in a text file.
 		/// </summary>
-		static void ConsoleLog(string text = "", bool noNewline = false)
+		private static void ConsoleLog(string text = "", bool noNewline = false)
 		{
 			text = text.Replace("\n", "");
 
@@ -35,7 +35,7 @@ namespace SteamCollectionDownloadSizeCalculator
 		/// <summary>
 		/// Main function of the program which retrieves the identifier and launches the functions to calculate the size.
 		/// </summary>
-		static async Task Main()
+		private static async Task Main()
 		{
 			// We ask to enter one or more identifiers.
 			ConsoleLog("-----------------------------------------");
@@ -51,7 +51,7 @@ namespace SteamCollectionDownloadSizeCalculator
 
 			ConsoleLog("");
 
-			Console.Write("=> ");
+			ConsoleLog("=> ", true);
 
 			var input = Console.ReadLine().Trim();
 			ConsoleLog("");
@@ -120,25 +120,24 @@ namespace SteamCollectionDownloadSizeCalculator
 				textMirror.Close();
 			}
 
-			Console.ReadLine();
+			_ = Console.ReadLine();
 		}
 
 		/// <summary>
 		/// Retrieves all the identifiers of a collection using the Steam "ISteamRemoteStorage" API.
 		/// </summary>
-		static async Task RequestSteamAPI(string requestedID)
+		private static async Task RequestSteamAPI(string requestedID)
 		{
 			try
 			{
 				// We prepare the query.
-				var parameters = new Dictionary<string, string>
+				var parameters = new FormUrlEncodedContent(new Dictionary<string, string>
 				{
 					{"collectioncount", "1"},
 					{"publishedfileids[0]", requestedID}
-				};
+				});
 
-				var content = new FormUrlEncodedContent(parameters);
-				var request = await client.PostAsync("https://api.steampowered.com/ISteamRemoteStorage/GetCollectionDetails/v1/", content);
+				var request = await client.PostAsync("https://api.steampowered.com/ISteamRemoteStorage/GetCollectionDetails/v1/", parameters);
 
 				if (request.IsSuccessStatusCode && request.Content != null)
 				{
@@ -180,27 +179,27 @@ namespace SteamCollectionDownloadSizeCalculator
 		/// Transforms bytes into a human readable string.
 		/// https://github.com/Facepunch/garrysmod/blob/87e75a6803905bbd1189f7b6f48680dc5b3beb48/garrysmod/lua/includes/extensions/string.lua#L257-L268 (Garry's Code ™)
 		/// </summary>
-		static string BytesToString(ulong size)
+		private static string BytesToString(ulong size)
 		{
-			if (size <= 0)
-				return "0 Byte";
-
-			if (size < 1000)
-				return size + " Bytes";
-
-			if (size < 1000 * 1000)
-				return Math.Round(size / 1000.0, 2) + " KB";
-
-			if (size < 1000 * 1000 * 1000)
-				return Math.Round(size / (1000.0 * 1000.0), 2) + " MB";
-
-			return Math.Round(size / (1000.0 * 1000.0 * 1000.0), 2) + " GB";
+			switch (size)
+			{
+				case <= 0:
+					return "0 Byte";
+				case < 1000:
+					return size + " Bytes";
+				case < 1000 * 1000:
+					return Math.Round(size / 1000.0, 2) + " KB";
+				case < 1000 * 1000 * 1000:
+					return Math.Round(size / (1000.0 * 1000.0), 2) + " MB";
+				default:
+					return Math.Round(size / (1000.0 * 1000.0 * 1000.0), 2) + " GB";
+			}
 		}
 
 		/// <summary>
 		/// Calculates the total size of all the elements retrieved previously.
 		/// </summary>
-		static async Task CalculateSize()
+		private static async Task CalculateSize()
 		{
 			try
 			{
@@ -218,8 +217,7 @@ namespace SteamCollectionDownloadSizeCalculator
 				}
 
 				// We perform the query and get the result in JSON format.
-				var content = new FormUrlEncodedContent(parameters);
-				var request = await client.PostAsync("https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/", content);
+				var request = await client.PostAsync("https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/", new FormUrlEncodedContent(parameters));
 
 				if (request.IsSuccessStatusCode && request.Content != null)
 				{
@@ -234,8 +232,7 @@ namespace SteamCollectionDownloadSizeCalculator
 
 						foreach (var item in items.EnumerateArray())
 						{
-							var identifier = item.GetProperty("publishedfileid");
-							var message = $"({count}/{index}) {identifier,-10} :";
+							var message = $"({count}/{index}) {item.GetProperty("publishedfileid"), -10} :";
 
 							if (item.TryGetProperty("title", out var title))
 							{
