@@ -14,6 +14,7 @@ namespace SteamCollectionDownloadSizeCalculator
 		private static bool shouldSave;
 		private static List<string> retrievedIDs = new();
 		private static readonly HttpClient client = new();
+		private static readonly List<string> units = new List<string>(){"Bytes", "KB", "MB", "GB", "TB"};
 		private static readonly TextWriter textMirror = new StreamWriter("output.txt");
 
 		/// <summary>
@@ -177,23 +178,16 @@ namespace SteamCollectionDownloadSizeCalculator
 
 		/// <summary>
 		/// Transforms bytes into a human readable string.
-		/// https://github.com/Facepunch/garrysmod/blob/87e75a6803905bbd1189f7b6f48680dc5b3beb48/garrysmod/lua/includes/extensions/string.lua#L257-L268 (Garry's Code ™)
 		/// </summary>
 		private static string BytesToString(ulong size)
 		{
-			switch (size)
-			{
-				case <= 0:
-					return "0 Byte";
-				case < 1000:
-					return size + " Bytes";
-				case < 1000 * 1000:
-					return Math.Round(size / 1000.0, 2) + " KB";
-				case < 1000 * 1000 * 1000:
-					return Math.Round(size / (1000.0 * 1000.0), 2) + " MB";
-				default:
-					return Math.Round(size / (1000.0 * 1000.0 * 1000.0), 2) + " GB";
-			}
+			if (size == 0)
+				return "0 Byte";
+
+			var bytes = Math.Abs(size);
+			var power = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
+
+			return format.ToString() + " " + units[power];
 		}
 
 		/// <summary>
