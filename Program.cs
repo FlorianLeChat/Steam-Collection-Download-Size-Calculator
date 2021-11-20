@@ -178,16 +178,51 @@ namespace SteamCollectionDownloadSizeCalculator
 
 		/// <summary>
 		/// Transforms bytes into a human readable string.
+		/// Source: https://stackoverflow.com/a/11124118
 		/// </summary>
 		private static string BytesToString(ulong size)
 		{
-			if (size == 0)
-				return "0 Byte";
+			string suffix;
+			double readable;
 
-			var bytes = Math.Abs(size);
-			var power = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
+			if (size >= 0x1000000000000000) // Exabyte
+			{
+				suffix = "EB";
+				readable = (size >> 50);
+			}
+			else if (size >= 0x4000000000000) // Petabyte
+			{
+				suffix = "PB";
+				readable = (size >> 40);
+			}
+			else if (size >= 0x10000000000) // Terabyte
+			{
+				suffix = "TB";
+				readable = (size >> 30);
+			}
+			else if (size >= 0x40000000) // Gigabyte
+			{
+				suffix = "GB";
+				readable = (size >> 20);
+			}
+			else if (size >= 0x100000) // Megabyte
+			{
+				suffix = "MB";
+				readable = (size >> 10);
+			}
+			else if (size >= 0x400) // Kilobyte
+			{
+				suffix = "KB";
+				readable = size;
+			}
+			else
+			{
+				return size.ToString("0 B"); // Byte
+			}
 
-			return format.ToString() + " " + units[power];
+			readable /= 1024;
+
+			return readable.ToString("0.## ") + suffix;
 		}
 
 		/// <summary>
