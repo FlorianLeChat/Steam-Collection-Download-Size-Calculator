@@ -180,7 +180,7 @@ namespace SteamCollectionDownloadSizeCalculator
 		/// Transforms bytes into a human readable string.
 		/// Source: https://stackoverflow.com/a/11124118
 		/// </summary>
-		private static string BytesToString(ulong size)
+		private static string BytesToString(long size)
 		{
 			string suffix;
 			double readable;
@@ -257,7 +257,7 @@ namespace SteamCollectionDownloadSizeCalculator
 					if (details.TryGetProperty("publishedfiledetails", out var items))
 					{
 						var count = 1;
-						var total = 0UL;
+						var total = 0L;
 
 						foreach (var item in items.EnumerateArray())
 						{
@@ -265,7 +265,7 @@ namespace SteamCollectionDownloadSizeCalculator
 
 							if (item.TryGetProperty("title", out var title))
 							{
-								var size = ulong.Parse(item.GetProperty("file_size").ToString());
+								var size = long.Parse(item.GetProperty("file_size").ToString());
 
 								ConsoleLog($"{message} {title} [{BytesToString(size)}]");
 
