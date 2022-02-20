@@ -1,4 +1,4 @@
-# Steam Collection Download Size Calculator
+# 📐 Steam Collection Download Size Calculator
 
 Several months ago, I was looking for a viable way to calculate the total size of a Workshop collection for my Garry's Mod server, so I created a Lua script using the internal [Facepunch Steamworks library](https://wiki.facepunch.com/gmod/steamworks) but I also wanted to have this way without necessarily going through the server console or turning on my game.
 
