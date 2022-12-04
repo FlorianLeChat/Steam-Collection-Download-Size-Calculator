@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace SteamCollectionDownloadSizeCalculator;
 
-internal partial class Program
+public partial class Calculator
 {
 	private static bool shouldSave;
 	private static List<string> retrievedItems = new();
@@ -182,7 +182,7 @@ internal partial class Program
 	/// Transforms bytes into a human readable string.
 	/// Source: https://stackoverflow.com/a/11124118
 	/// </summary>
-	private static string BytesToString(long size)
+	public static string BytesToString(long size)
 	{
 		string suffix;
 		double readable;
