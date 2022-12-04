@@ -14,7 +14,7 @@ namespace SteamCollectionDownloadSizeCalculator
 		private static bool shouldSave;
 		private static List<string> retrievedIDs = new();
 		private static readonly HttpClient client = new();
-		private static readonly List<string> units = new List<string>(){"Bytes", "KB", "MB", "GB", "TB"};
+		private static readonly List<string> units = new List<string>() { "Bytes", "KB", "MB", "GB", "TB" };
 		private static readonly TextWriter textMirror = new StreamWriter("output.txt");
 
 		/// <summary>
@@ -48,7 +48,7 @@ namespace SteamCollectionDownloadSizeCalculator
 			ConsoleLog("Please provide a Workshop object identifier (you can also put several in a row by putting \";\" between each).");
 			ConsoleLog("Example: \"https://steamcommunity.com/sharedfiles/filedetails/?id=1448345830\" or \"1448345830;947461782\".");
 
-			retry:
+		retry:
 
 			ConsoleLog("");
 
@@ -188,27 +188,27 @@ namespace SteamCollectionDownloadSizeCalculator
 			if (size >= 0x1000000000000000) // Exabyte
 			{
 				suffix = "EB";
-				readable = (size >> 50);
+				readable = size >> 50;
 			}
 			else if (size >= 0x4000000000000) // Petabyte
 			{
 				suffix = "PB";
-				readable = (size >> 40);
+				readable = size >> 40;
 			}
 			else if (size >= 0x10000000000) // Terabyte
 			{
 				suffix = "TB";
-				readable = (size >> 30);
+				readable = size >> 30;
 			}
 			else if (size >= 0x40000000) // Gigabyte
 			{
 				suffix = "GB";
-				readable = (size >> 20);
+				readable = size >> 20;
 			}
 			else if (size >= 0x100000) // Megabyte
 			{
 				suffix = "MB";
-				readable = (size >> 10);
+				readable = size >> 10;
 			}
 			else if (size >= 0x400) // Kilobyte
 			{
@@ -261,7 +261,7 @@ namespace SteamCollectionDownloadSizeCalculator
 
 						foreach (var item in items.EnumerateArray())
 						{
-							var message = $"({count}/{index}) {item.GetProperty("publishedfileid"), -10} :";
+							var message = $"({count}/{index}) {item.GetProperty("publishedfileid"),-10} :";
 
 							if (item.TryGetProperty("title", out var title))
 							{
