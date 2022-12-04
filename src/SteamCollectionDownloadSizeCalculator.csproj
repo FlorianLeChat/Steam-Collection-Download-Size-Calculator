@@ -9,6 +9,8 @@
 		<PlatformTarget>x64</PlatformTarget>
 		<PublishTrimmed>true</PublishTrimmed>
 		<ApplicationIcon>logo.ico</ApplicationIcon>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 </Project>
