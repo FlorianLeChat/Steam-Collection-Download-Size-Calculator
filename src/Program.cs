@@ -3,13 +3,18 @@ using System.Text.RegularExpressions;
 
 namespace SteamCollectionDownloadSizeCalculator;
 
-internal class Program
+internal partial class Program
 {
 	private static bool shouldSave;
-	private static List<string> retrievedIDs = new();
-	private static readonly HttpClient client = new();
-	private static readonly List<string> units = new List<string>() { "Bytes", "KB", "MB", "GB", "TB" };
+	private static List<string> retrievedItems = new();
+	private static readonly HttpClient httpClient = new();
 	private static readonly TextWriter textMirror = new StreamWriter("output.txt");
+
+	/// <summary>
+	/// A regex which matches the numbers "0" to "9" atomically at least once.
+	/// </summary>
+	[GeneratedRegex("[0-9]+")]
+	private static partial Regex FindNumbers();
 
 	/// <summary>
 	/// A simple method to display messages in the console and save them in a text file.
@@ -45,41 +50,41 @@ internal class Program
 		retry:
 
 		ConsoleLog("");
-
 		ConsoleLog("=> ", true);
 
-		var input = Console.ReadLine().Trim();
+		var userInput = Console.ReadLine()?.Trim();
+
 		ConsoleLog("");
 
-		if (string.IsNullOrWhiteSpace(input))
+		if (string.IsNullOrWhiteSpace(userInput))
 		{
 			ConsoleLog("Assessment error. Please enter an identifier.");
 			goto retry;
 		}
 
 		// We check if the input contains valid identifiers.
-		var matches = Regex.Matches(input, "[0-9]+");
+		var collectionIds = FindNumbers().Matches(userInput);
 
-		if (matches.Count == 0)
+		if (collectionIds.Count == 0)
 		{
 			ConsoleLog("Assessment error. Please enter a valid identifier.");
 			goto retry;
 		}
 
 		// You are asked if the console output should be saved in a text file.
-		ConsoleKey response;
+		ConsoleKey userResponse;
 
 		do
 		{
 			Console.Write("Do you want to save the console output in a text file? [y/n] ");
 
-			response = Console.ReadKey(false).Key;
+			userResponse = Console.ReadKey(false).Key;
 
-			if (response != ConsoleKey.Enter)
+			if (userResponse != ConsoleKey.Enter)
 				ConsoleLog();
-		} while (response != ConsoleKey.Y && response != ConsoleKey.N);
+		} while (userResponse != ConsoleKey.Y && userResponse != ConsoleKey.N);
 
-		shouldSave = response == ConsoleKey.Y;
+		shouldSave = userResponse == ConsoleKey.Y;
 
 		if (shouldSave)
 			ConsoleLog("The console output will be saved into the file \"output.txt\" in the application folder.");
@@ -87,22 +92,25 @@ internal class Program
 		ConsoleLog();
 
 		// We iterate through all the results.
-		foreach (var match in matches)
+		foreach (var collectionId in collectionIds)
 		{
 			// We retrieve all the identifiers through the Steam API.
-			var identifier = match.ToString();
+			var objectId = collectionId?.ToString();
 
-			await RequestSteamAPI(identifier);
+			if (objectId is not null)
+			{
+				await RequestSteamAPI(objectId);
 
-			retrievedIDs = retrievedIDs.Distinct().ToList();
+				retrievedItems = retrievedItems.Distinct().ToList();
 
-			if (retrievedIDs.Count == 0)
-				ConsoleLog($"The object \"{identifier}\" doesn't contain any element, move to the next one.");
+				if (retrievedItems.Count == 0)
+					ConsoleLog($"The object \"{objectId}\" doesn't contain any element, move to the next one.");
 
-			// Then we calculate the size of the identifiers for this object.
-			await CalculateSize();
+				// Then we calculate the size of the identifiers for this object.
+				await CalculateSize();
 
-			retrievedIDs.Clear();
+				retrievedItems.Clear();
+			}
 		}
 
 		ConsoleLog("Program terminated. Thanks for using it :D");
@@ -121,7 +129,7 @@ internal class Program
 	/// <summary>
 	/// Retrieves all the identifiers of a collection using the Steam "ISteamRemoteStorage" API.
 	/// </summary>
-	private static async Task RequestSteamAPI(string requestedID)
+	private static async Task RequestSteamAPI(string objectId)
 	{
 		try
 		{
@@ -129,34 +137,34 @@ internal class Program
 			var parameters = new FormUrlEncodedContent(new Dictionary<string, string>
 			{
 				{"collectioncount", "1"},
-				{"publishedfileids[0]", requestedID}
+				{"publishedfileids[0]", objectId}
 			});
 
-			var request = await client.PostAsync("https://api.steampowered.com/ISteamRemoteStorage/GetCollectionDetails/v1/", parameters);
+			var request = await httpClient.PostAsync("https://api.steampowered.com/ISteamRemoteStorage/GetCollectionDetails/v1/", parameters);
 
 			if (request.IsSuccessStatusCode && request.Content != null)
 			{
 				// Then we iterate through the whole JSON file to retrieve the identifiers.
 				var document = await JsonDocument.ParseAsync(await request.Content.ReadAsStreamAsync());
-				var details = document.RootElement.GetProperty("response").GetProperty("collectiondetails")[0];
+				var response = document.RootElement.GetProperty("response").GetProperty("collectiondetails")[0];
 
-				if (details.TryGetProperty("children", out var items))
+				if (response.TryGetProperty("children", out var itemsId))
 				{
-					ConsoleLog($"The Steam API reports that the object is a Workshop collection containing {items.GetArrayLength()} items.");
+					ConsoleLog($"The Steam API reports that the object is a Workshop collection containing {itemsId.GetArrayLength()} items.");
 					ConsoleLog("Beginning of calculation...");
 
-					foreach (var item in items.EnumerateArray())
+					foreach (var itemId in itemsId.EnumerateArray())
 					{
-						if (item.TryGetProperty("publishedfileid", out var identifier))
+						if (itemId.TryGetProperty("publishedfileid", out var fileId))
 						{
-							retrievedIDs.Add(identifier.ToString());
+							retrievedItems.Add(fileId.ToString());
 						}
 					}
 				}
 				else
 				{
 					ConsoleLog("The Steam API reports that the object is a simple addon (in some cases, the identifier you entered may be invalid).");
-					retrievedIDs.Add(requestedID);
+					retrievedItems.Add(objectId);
 				}
 			}
 			else
@@ -230,50 +238,50 @@ internal class Program
 			var index = 0;
 			var parameters = new Dictionary<string, string>
 			{
-				{"itemcount", retrievedIDs.Count.ToString()},
+				{"itemcount", retrievedItems.Count.ToString()},
 			};
 
-			foreach (var identifier in retrievedIDs)
+			foreach (var itemId in retrievedItems)
 			{
-				parameters.Add($"publishedfileids[{index}]", identifier);
+				parameters.Add($"publishedfileids[{index}]", itemId);
 				index++;
 			}
 
 			// We perform the query and get the result in JSON format.
-			var request = await client.PostAsync("https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/", new FormUrlEncodedContent(parameters));
+			var request = await httpClient.PostAsync("https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/", new FormUrlEncodedContent(parameters));
 
 			if (request.IsSuccessStatusCode && request.Content != null)
 			{
 				var document = await JsonDocument.ParseAsync(await request.Content.ReadAsStreamAsync());
-				var details = document.RootElement.GetProperty("response");
+				var response = document.RootElement.GetProperty("response");
 
 				// Some of the objects previously filled in may not exist so we check that.
-				if (details.TryGetProperty("publishedfiledetails", out var items))
+				if (response.TryGetProperty("publishedfiledetails", out var fileInfo))
 				{
-					var count = 1;
-					var total = 0L;
+					var totalSize = 0L;
+					var currentItem = 1;
 
-					foreach (var item in items.EnumerateArray())
+					foreach (var itemInfo in fileInfo.EnumerateArray())
 					{
-						var message = $"({count}/{index}) {item.GetProperty("publishedfileid"),-10} :";
+						var consoleOutput = $"({currentItem}/{index}) {itemInfo.GetProperty("publishedfileid"),-10} :";
 
-						if (item.TryGetProperty("title", out var title))
+						if (itemInfo.TryGetProperty("title", out var title))
 						{
-							var size = long.Parse(item.GetProperty("file_size").ToString());
+							var itemSize = long.Parse(itemInfo.GetProperty("file_size").ToString());
 
-							ConsoleLog($"{message} {title} [{BytesToString(size)}]");
+							ConsoleLog($"{consoleOutput} {title} [{BytesToString(itemSize)}]");
 
-							total += size;
+							totalSize += itemSize;
 						}
 						else
 						{
-							ConsoleLog($"{message} ERROR -> OBJECT IS HIDDEN OR UNAVAILABLE");
+							ConsoleLog($"{consoleOutput} ERROR -> OBJECT IS HIDDEN OR UNAVAILABLE");
 						}
 
-						count++;
+						currentItem++;
 					}
 
-					ConsoleLog($"Total size: {BytesToString(total)}.");
+					ConsoleLog($"Total size: {BytesToString(totalSize)}.");
 					ConsoleLog();
 				}
 				else
