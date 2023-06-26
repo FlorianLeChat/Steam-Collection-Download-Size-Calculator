@@ -6,7 +6,7 @@ namespace SteamCollectionDownloadSizeCalculator;
 public partial class Calculator
 {
 	private static bool shouldSave;
-	private static string order = "ASC";
+	private static string order = "none";
 	private static List<string> retrievedItems = new();
 	private static readonly HttpClient httpClient = new();
 	private static readonly TextWriter textMirror = new StreamWriter("output.txt");
@@ -48,44 +48,80 @@ public partial class Calculator
 		ConsoleLog("Please provide a Workshop object identifier (you can also put several in a row by putting \";\" between each).");
 		ConsoleLog("Example: \"https://steamcommunity.com/sharedfiles/filedetails/?id=1448345830\" or \"1448345830;947461782\".");
 
-		retry:
+		checkIdentifier:
 
 		ConsoleLog("");
 		ConsoleLog("=> ", true);
 
-		var userInput = Console.ReadLine()?.Trim();
+		var identifiers = Console.ReadLine()?.Trim();
 
 		ConsoleLog("");
 
-		if (string.IsNullOrWhiteSpace(userInput))
+		if (string.IsNullOrWhiteSpace(identifiers))
 		{
 			ConsoleLog("Validation error. Please enter an identifier.");
-			goto retry;
+			goto checkIdentifier;
 		}
 
 		// Check for valid identifiers.
-		var collectionIds = FindNumbers().Matches(userInput);
+		var collectionIds = FindNumbers().Matches(identifiers);
 
 		if (collectionIds.Count == 0)
 		{
 			ConsoleLog("Validation error. Please enter a valid identifier.");
-			goto retry;
+			goto checkIdentifier;
 		}
 
+		// Request sort order of results after processing.
+		ConsoleLog("Do you want to order objects by size?");
+		ConsoleLog("Type \"ASC\" for ascending sorting, \"DESC\" for descending sorting, or leave blank if you don't want any sorting.");
+
+		checkOrder:
+
+		ConsoleLog("");
+		ConsoleLog("=> ", true);
+
+		var requestOrder = Console.ReadLine()?.Trim().ToUpper();
+
+		ConsoleLog("");
+
+		switch (requestOrder)
+		{
+			case "ASC":
+				order = "ASC";
+				ConsoleLog("Ascending sorting (smallest files first).");
+				break;
+
+			case "DESC":
+				order = "DESC";
+				ConsoleLog("Descending sorting (heaviest files first).");
+				break;
+
+			case "":
+				ConsoleLog("No sorting (files sorted in order they were added to the collection).");
+				break;
+
+			default:
+				ConsoleLog("Invalid selection. Choose a valid sort or leave blank to ignore this step.");
+				goto checkOrder;
+		}
+
+		ConsoleLog("");
+
 		// Prompt if console output should be saved to a text file.
-		ConsoleKey userResponse;
+		ConsoleKey requestSave;
 
 		do
 		{
 			Console.Write("Do you want to save console output to a text file? [y/n] ");
 
-			userResponse = Console.ReadKey(false).Key;
+			requestSave = Console.ReadKey(false).Key;
 
-			if (userResponse != ConsoleKey.Enter)
+			if (requestSave != ConsoleKey.Enter)
 				ConsoleLog();
-		} while (userResponse != ConsoleKey.Y && userResponse != ConsoleKey.N);
+		} while (requestSave != ConsoleKey.Y && requestSave != ConsoleKey.N);
 
-		shouldSave = userResponse == ConsoleKey.Y;
+		shouldSave = requestSave == ConsoleKey.Y;
 
 		if (shouldSave)
 			ConsoleLog("Console output will be saved in a \"output.txt\" file in application directory.");
@@ -260,9 +296,22 @@ public partial class Calculator
 				if (response.TryGetProperty("publishedfiledetails", out var fileInfo))
 				{
 					var totalSize = 0L;
+					var arrayItems = fileInfo.EnumerateArray();
 					var currentItem = 1;
+					IEnumerable<JsonElement>? sortedItems = null;
 
-					foreach (var itemInfo in fileInfo.EnumerateArray())
+					if (order == "ASC")
+					{
+						// Ascending sorting.
+						sortedItems = arrayItems.OrderBy(itemInfo => long.Parse(itemInfo.GetProperty("file_size").ToString()));
+					}
+					else if (order == "DESC")
+					{
+						// Descending sorting.
+						sortedItems = arrayItems.OrderByDescending(itemInfo => long.Parse(itemInfo.GetProperty("file_size").ToString()));
+					}
+	
+					foreach (var itemInfo in (sortedItems ?? arrayItems))
 					{
 						var consoleOutput = $"({currentItem}/{index}) {itemInfo.GetProperty("publishedfileid"),-10} :";
 
