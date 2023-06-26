@@ -6,18 +6,19 @@ namespace SteamCollectionDownloadSizeCalculator;
 public partial class Calculator
 {
 	private static bool shouldSave;
+	private static string order = "ASC";
 	private static List<string> retrievedItems = new();
 	private static readonly HttpClient httpClient = new();
 	private static readonly TextWriter textMirror = new StreamWriter("output.txt");
 
 	/// <summary>
-	/// A regex which matches the numbers "0" to "9" atomically at least once.
+	/// A regular expression which atomically matches numbers "0" to "9" at least once.
 	/// </summary>
 	[GeneratedRegex("[0-9]+")]
 	private static partial Regex FindNumbers();
 
 	/// <summary>
-	/// A simple method to display messages in the console and save them in a text file.
+	/// A simple method for displaying messages in the console and saving them in a text file.
 	/// </summary>
 	private static void ConsoleLog(string text = "", bool noNewline = false)
 	{
@@ -33,11 +34,11 @@ public partial class Calculator
 	}
 
 	/// <summary>
-	/// Main function of the program which retrieves the identifier and launches the functions to calculate the size.
+	/// Main program function which retrieves identifier and launches size calculation functions.
 	/// </summary>
 	private static async Task Main()
 	{
-		// We ask to enter one or more identifiers.
+		// Prompt to enter one or more identifiers.
 		ConsoleLog("-----------------------------------------");
 		ConsoleLog("Steam Collection Download Size Calculator");
 		ConsoleLog("-----------------------------------------");
@@ -58,25 +59,25 @@ public partial class Calculator
 
 		if (string.IsNullOrWhiteSpace(userInput))
 		{
-			ConsoleLog("Assessment error. Please enter an identifier.");
+			ConsoleLog("Validation error. Please enter an identifier.");
 			goto retry;
 		}
 
-		// We check if the input contains valid identifiers.
+		// Check for valid identifiers.
 		var collectionIds = FindNumbers().Matches(userInput);
 
 		if (collectionIds.Count == 0)
 		{
-			ConsoleLog("Assessment error. Please enter a valid identifier.");
+			ConsoleLog("Validation error. Please enter a valid identifier.");
 			goto retry;
 		}
 
-		// You are asked if the console output should be saved in a text file.
+		// Prompt if console output should be saved to a text file.
 		ConsoleKey userResponse;
 
 		do
 		{
-			Console.Write("Do you want to save the console output in a text file? [y/n] ");
+			Console.Write("Do you want to save console output to a text file? [y/n] ");
 
 			userResponse = Console.ReadKey(false).Key;
 
@@ -87,14 +88,14 @@ public partial class Calculator
 		shouldSave = userResponse == ConsoleKey.Y;
 
 		if (shouldSave)
-			ConsoleLog("The console output will be saved into the file \"output.txt\" in the application folder.");
+			ConsoleLog("Console output will be saved in a \"output.txt\" file in application directory.");
 
 		ConsoleLog();
 
-		// We iterate through all the results.
+		// Iterate through all results.
 		foreach (var collectionId in collectionIds)
 		{
-			// We retrieve all the identifiers through the Steam API.
+			// Retrieve all identifiers using Steam API.
 			var objectId = collectionId?.ToString();
 
 			if (objectId is not null)
@@ -104,9 +105,9 @@ public partial class Calculator
 				retrievedItems = retrievedItems.Distinct().ToList();
 
 				if (retrievedItems.Count == 0)
-					ConsoleLog($"The object \"{objectId}\" doesn't contain any element, move to the next one.");
+					ConsoleLog($"Object \"{objectId}\" does not contain any elements, move on to next one.");
 
-				// Then we calculate the size of the identifiers for this object.
+				// Calculate total object size.
 				await CalculateSize();
 
 				retrievedItems.Clear();
@@ -117,7 +118,7 @@ public partial class Calculator
 
 		if (shouldSave)
 		{
-			ConsoleLog("Note: The output file will be automatically overwritten the next time you launch the application.");
+			ConsoleLog("Note: output file will be automatically overwritten next time you launch the application.");
 
 			textMirror.Flush();
 			textMirror.Close();
@@ -127,13 +128,13 @@ public partial class Calculator
 	}
 
 	/// <summary>
-	/// Retrieves all the identifiers of a collection using the Steam "ISteamRemoteStorage" API.
+	/// Retrieves all identifiers in a collection using Steam's "ISteamRemoteStorage" API.
 	/// </summary>
 	private static async Task RequestSteamAPI(string objectId)
 	{
 		try
 		{
-			// We prepare the query.
+			// Prepare the query.
 			var parameters = new FormUrlEncodedContent(new Dictionary<string, string>
 			{
 				{"collectioncount", "1"},
@@ -144,14 +145,14 @@ public partial class Calculator
 
 			if (request.IsSuccessStatusCode && request.Content != null)
 			{
-				// Then we iterate through the whole JSON file to retrieve the identifiers.
+				// Query the entire JSON file to retrieve identifiers.
 				var document = await JsonDocument.ParseAsync(await request.Content.ReadAsStreamAsync());
 				var response = document.RootElement.GetProperty("response").GetProperty("collectiondetails")[0];
 
 				if (response.TryGetProperty("children", out var itemsId))
 				{
-					ConsoleLog($"The Steam API reports that the object is a Workshop collection containing {itemsId.GetArrayLength()} items.");
-					ConsoleLog("Beginning of calculation...");
+					ConsoleLog($"Steam API says object is a Workshop collection containing {itemsId.GetArrayLength()} items.");
+					ConsoleLog("Begin computation...");
 
 					foreach (var itemId in itemsId.EnumerateArray())
 					{
@@ -163,13 +164,13 @@ public partial class Calculator
 				}
 				else
 				{
-					ConsoleLog("The Steam API reports that the object is a simple addon (in some cases, the identifier you entered may be invalid).");
+					ConsoleLog("Steam API says object is a simple addon (in some cases, the identifier you've entered may be invalid).");
 					retrievedItems.Add(objectId);
 				}
 			}
 			else
 			{
-				ConsoleLog("A network error occurred while requesting the Steam servers. Please try again later.");
+				ConsoleLog("A network error occurred while requesting Steam servers. Please try again later.");
 			}
 		}
 		catch (Exception error)
@@ -228,13 +229,13 @@ public partial class Calculator
 	}
 
 	/// <summary>
-	/// Calculates the total size of all the elements retrieved previously.
+	/// Calculates total size of all previously retrieved elements.
 	/// </summary>
 	private static async Task CalculateSize()
 	{
 		try
 		{
-			// We fill in all the identifiers to make a single request.
+			// Fill in all identifiers to make a single request.
 			var index = 0;
 			var parameters = new Dictionary<string, string>
 			{
@@ -247,7 +248,7 @@ public partial class Calculator
 				index++;
 			}
 
-			// We perform the query and get the result in JSON format.
+			// Perform query and retrieve result in JSON format.
 			var request = await httpClient.PostAsync("https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/", new FormUrlEncodedContent(parameters));
 
 			if (request.IsSuccessStatusCode && request.Content != null)
@@ -255,7 +256,7 @@ public partial class Calculator
 				var document = await JsonDocument.ParseAsync(await request.Content.ReadAsStreamAsync());
 				var response = document.RootElement.GetProperty("response");
 
-				// Some of the objects previously filled in may not exist so we check that.
+				// Some objects previously filled in may not exist.
 				if (response.TryGetProperty("publishedfiledetails", out var fileInfo))
 				{
 					var totalSize = 0L;
@@ -286,12 +287,12 @@ public partial class Calculator
 				}
 				else
 				{
-					ConsoleLog("It seems that the object is invalid or simply temporarily unavailable.");
+					ConsoleLog("It seems that the object is invalid or just temporarily unavailable.");
 				}
 			}
 			else
 			{
-				ConsoleLog("A network error occurred while requesting the Steam servers. Please try again later.");
+				ConsoleLog("A network error occurred while requesting Steam servers. Please try again later.");
 			}
 		}
 		catch (Exception error)
