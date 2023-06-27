@@ -7,9 +7,9 @@ public partial class Calculator
 {
 	private static bool shouldSave;
 	private static string order = "none";
+	private static TextWriter? textMirror = null;
 	private static List<string> retrievedItems = new();
 	private static readonly HttpClient httpClient = new();
-	private static readonly TextWriter textMirror = new StreamWriter("output.txt");
 
 	/// <summary>
 	/// A regular expression which atomically matches numbers "0" to "9" at least once.
@@ -30,7 +30,7 @@ public partial class Calculator
 			Console.WriteLine(text);
 
 		if (shouldSave)
-			textMirror.WriteLine(text);
+			textMirror?.WriteLine(text);
 	}
 
 	/// <summary>
@@ -124,7 +124,10 @@ public partial class Calculator
 		shouldSave = requestSave == ConsoleKey.Y;
 
 		if (shouldSave)
+		{
+			textMirror = new StreamWriter("output.txt");
 			ConsoleLog("Console output will be saved in a \"output.txt\" file in application directory.");
+		}
 
 		ConsoleLog();
 
@@ -156,8 +159,8 @@ public partial class Calculator
 		{
 			ConsoleLog("Note: output file will be automatically overwritten next time you launch the application.");
 
-			textMirror.Flush();
-			textMirror.Close();
+			textMirror?.Flush();
+			textMirror?.Close();
 		}
 
 		_ = Console.ReadLine();
