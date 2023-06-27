@@ -22,3 +22,36 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - name: Publish Linux (arm64/x64)
+      run: |
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r linux-x64 --nologo --self-contained
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r linux-arm64 --nologo --self-contained
+    - name: Upload Linux Builds
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-builds
+        path: |
+          /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/dotnet/src/bin/Release/net7.0/linux-x64/publish/
+          /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/dotnet/src/bin/Release/net7.0/linux-arm64/publish/
+    - name: Publish OSX (arm64/x64)
+      run: |
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r osx-x64 --nologo --self-contained
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r osx-arm64 --nologo --self-contained
+    - name: Upload OSX Builds
+      uses: actions/upload-artifact@v3
+      with:
+        name: osx-builds
+        path: |
+          /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/dotnet/src/bin/Release/net7.0/osx-x64/publish/
+          /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/dotnet/src/bin/Release/net7.0/osx-arm64/publish/
+    - name: Publish Windows (arm64/x64)
+      run: |
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r win-x64 --nologo --self-contained
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r win-arm64 --nologo --self-contained
+    - name: Upload Windows Builds
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-builds
+        path: |
+          /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/dotnet/src/bin/Release/net7.0/win-x64/publish/
+          /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/dotnet/src/bin/Release/net7.0/win-arm64/publish/
