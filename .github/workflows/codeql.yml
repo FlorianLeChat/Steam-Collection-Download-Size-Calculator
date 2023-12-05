@@ -17,9 +17,9 @@ jobs:
       contents: read
       security-events: write
     strategy:
-      fail-fast: false
       matrix:
         language: [ csharp ]
+      fail-fast: false
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
