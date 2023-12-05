@@ -36,7 +36,7 @@ jobs:
       uses: actions/upload-artifact@v3
       if: github.event_name == 'push'
       with:
-        name: linux-builds
+        name: linux-builds-dotnet-${{ matrix.dotnet }}
         path: |
           /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/src/bin/Release/net8.0/linux-x64/publish/
           /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/src/bin/Release/net8.0/linux-arm64/publish/
@@ -48,7 +48,7 @@ jobs:
       uses: actions/upload-artifact@v3
       if: github.event_name == 'push'
       with:
-        name: osx-builds
+        name: osx-builds-dotnet-${{ matrix.dotnet }}
         path: |
           /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/src/bin/Release/net8.0/osx-x64/publish/
           /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/src/bin/Release/net8.0/osx-arm64/publish/
@@ -60,7 +60,7 @@ jobs:
       uses: actions/upload-artifact@v3
       if: github.event_name == 'push'
       with:
-        name: windows-builds
+        name: windows-builds-dotnet-${{ matrix.dotnet }}
         path: |
           /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/src/bin/Release/net8.0/win-x64/publish/
           /home/runner/work/Steam-Collection-Download-Size-Calculator/Steam-Collection-Download-Size-Calculator/src/bin/Release/net8.0/win-arm64/publish/
