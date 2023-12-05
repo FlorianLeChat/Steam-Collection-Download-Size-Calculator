@@ -2,9 +2,11 @@ name: .NET
 
 on:
   push:
-    paths:
-      - "**.cs"
-  workflow_dispatch:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: 0 6 * * 1
 
 jobs:
   build:
@@ -32,6 +34,7 @@ jobs:
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r linux-arm64 --nologo --self-contained
     - name: Upload Linux Builds
       uses: actions/upload-artifact@v3
+      if: github.event_name == 'push'
       with:
         name: linux-builds
         path: |
@@ -43,6 +46,7 @@ jobs:
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r osx-arm64 --nologo --self-contained
     - name: Upload OSX Builds
       uses: actions/upload-artifact@v3
+      if: github.event_name == 'push'
       with:
         name: osx-builds
         path: |
@@ -54,6 +58,7 @@ jobs:
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r win-arm64 --nologo --self-contained
     - name: Upload Windows Builds
       uses: actions/upload-artifact@v3
+      if: github.event_name == 'push'
       with:
         name: windows-builds
         path: |
