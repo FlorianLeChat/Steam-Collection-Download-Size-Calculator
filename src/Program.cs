@@ -113,20 +113,26 @@ public partial class Calculator
 
 		do
 		{
-			Console.Write("Do you want to save console output to a text file? [y/n] ");
+			Console.Write("Do you want to save console output to a text file? [y/N] ");
 
 			requestSave = Console.ReadKey(false).Key;
 
-			if (requestSave != ConsoleKey.Enter)
-				ConsoleLog();
+			ConsoleLog();
+
+			if (requestSave == ConsoleKey.Enter)
+				break;
 		} while (requestSave != ConsoleKey.Y && requestSave != ConsoleKey.N);
 
 		shouldSave = requestSave == ConsoleKey.Y;
 
 		if (shouldSave)
 		{
-			textMirror = new StreamWriter("output.txt");
-			ConsoleLog("Console output will be saved in a \"output.txt\" file in application directory.");
+			textMirror = new StreamWriter("output.log");
+			ConsoleLog("Console output will be saved in a \"output.log\" file in application directory.");
+		}
+		else
+		{
+			ConsoleLog("Console output will not be saved for this session.");
 		}
 
 		ConsoleLog();
@@ -167,7 +173,7 @@ public partial class Calculator
 	}
 
 	/// <summary>
-	/// Retrieves all identifiers in a collection using Steam's "ISteamRemoteStorage" API.
+	/// Retrieves all identifiers in a collection using the "ISteamRemoteStorage" Steam API.
 	/// </summary>
 	private static async Task RequestSteamAPI(string objectId)
 	{
@@ -190,8 +196,8 @@ public partial class Calculator
 
 				if (response.TryGetProperty("children", out var itemsId))
 				{
-					ConsoleLog($"Steam API says object is a Workshop collection containing {itemsId.GetArrayLength()} items.");
-					ConsoleLog("Begin computation...");
+					ConsoleLog($"Steam API says that the object is a Workshop collection containing {itemsId.GetArrayLength()} items.");
+					ConsoleLog("Starting computation...");
 
 					foreach (var itemId in itemsId.EnumerateArray())
 					{
@@ -203,7 +209,7 @@ public partial class Calculator
 				}
 				else
 				{
-					ConsoleLog("Steam API says object is a simple addon (in some cases, the identifier you've entered may be invalid).");
+					ConsoleLog("Steam API says that the object is a simple addon (in some cases, the identifier you've provided may be invalid).");
 					retrievedItems.Add(objectId);
 				}
 			}
