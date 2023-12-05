@@ -39,6 +39,8 @@ public partial class Calculator
 	private static async Task Main()
 	{
 		// Prompt to enter one or more identifiers.
+		programStart:
+
 		ConsoleLog("-----------------------------------------");
 		ConsoleLog("Steam Collection Download Size Calculator");
 		ConsoleLog("-----------------------------------------");
@@ -73,69 +75,75 @@ public partial class Calculator
 		}
 
 		// Request sort order of results after processing.
-		ConsoleLog("Do you want to order objects by size?");
-		ConsoleLog("Type \"ASC\" for ascending sorting, \"DESC\" for descending sorting, or leave blank if you don't want any sorting.");
-
-		checkOrder:
-
-		ConsoleLog("");
-		ConsoleLog("=> ", true);
-
-		var requestOrder = Console.ReadLine()?.Trim().ToUpper();
-
-		ConsoleLog("");
-
-		switch (requestOrder)
+		if (order == "none")
 		{
-			case "ASC":
-				order = "ASC";
-				ConsoleLog("Ascending sorting (smallest files first).");
-				break;
+			ConsoleLog("Do you want to order objects by size?");
+			ConsoleLog("Type \"ASC\" for ascending sorting, \"DESC\" for descending sorting, or leave blank if you don't want any sorting.");
 
-			case "DESC":
-				order = "DESC";
-				ConsoleLog("Descending sorting (heaviest files first).");
-				break;
+			checkOrder:
 
-			case "":
-				ConsoleLog("No sorting (files sorted in order they were added to the collection).");
-				break;
+			ConsoleLog("");
+			ConsoleLog("=> ", true);
 
-			default:
-				ConsoleLog("Invalid selection. Choose a valid sort or leave blank to ignore this step.");
-				goto checkOrder;
+			var requestOrder = Console.ReadLine()?.Trim().ToUpper();
+
+			ConsoleLog("");
+
+			switch (requestOrder)
+			{
+				case "ASC":
+					order = "ASC";
+					ConsoleLog("Ascending sorting (smallest files first).");
+					break;
+
+				case "DESC":
+					order = "DESC";
+					ConsoleLog("Descending sorting (heaviest files first).");
+					break;
+
+				case "":
+					ConsoleLog("No sorting (files sorted in order they were added to the collection).");
+					break;
+
+				default:
+					ConsoleLog("Invalid selection. Choose a valid sort or leave blank to ignore this step.");
+					goto checkOrder;
+			}
+
+			ConsoleLog("");
 		}
-
-		ConsoleLog("");
 
 		// Prompt if console output should be saved to a text file.
-		ConsoleKey requestSave;
-
-		do
+		if (textMirror == null)
 		{
-			Console.Write("Do you want to save console output to a text file? [y/N] ");
+			ConsoleKey requestSave;
 
-			requestSave = Console.ReadKey(false).Key;
+			do
+			{
+				Console.Write("Do you want to save console output to a text file? [y/N] ");
+
+				requestSave = Console.ReadKey(false).Key;
+
+				ConsoleLog();
+
+				if (requestSave == ConsoleKey.Enter)
+					break;
+			} while (requestSave != ConsoleKey.Y && requestSave != ConsoleKey.N);
+
+			shouldSave = requestSave == ConsoleKey.Y;
+
+			if (shouldSave)
+			{
+				textMirror = new StreamWriter("output.log");
+				ConsoleLog("Console output will be saved in a \"output.log\" file in application directory.");
+			}
+			else
+			{
+				ConsoleLog("Console output will not be saved for this time.");
+			}
 
 			ConsoleLog();
-
-			if (requestSave == ConsoleKey.Enter)
-				break;
-		} while (requestSave != ConsoleKey.Y && requestSave != ConsoleKey.N);
-
-		shouldSave = requestSave == ConsoleKey.Y;
-
-		if (shouldSave)
-		{
-			textMirror = new StreamWriter("output.log");
-			ConsoleLog("Console output will be saved in a \"output.log\" file in application directory.");
 		}
-		else
-		{
-			ConsoleLog("Console output will not be saved for this session.");
-		}
-
-		ConsoleLog();
 
 		// Iterate through all results.
 		foreach (var collectionId in collectionIds)
@@ -159,17 +167,48 @@ public partial class Calculator
 			}
 		}
 
-		ConsoleLog("Program terminated. Thanks for using it :D");
-
+		// Saves contents in log file between each run.
 		if (shouldSave)
 		{
-			ConsoleLog("Note: output file will be automatically overwritten next time you launch the application.");
-
 			textMirror?.Flush();
-			textMirror?.Close();
 		}
 
-		_ = Console.ReadLine();
+		// Prompts the user to restart the program.
+		ConsoleKey requestRetry;
+
+		do
+		{
+			Console.Write("Do you need to calculate another collection? [Y/n] ");
+
+			requestRetry = Console.ReadKey(false).Key;
+
+			ConsoleLog();
+
+			if (requestRetry == ConsoleKey.Enter)
+				break;
+		} while (requestRetry != ConsoleKey.Y && requestRetry != ConsoleKey.N);
+
+		if (requestRetry != ConsoleKey.N)
+		{
+			ConsoleLog("Program is restarting...");
+			ConsoleLog();
+
+			goto programStart;
+		}
+		else
+		{
+			ConsoleLog("Program terminated. Thanks for using it :D");
+
+			if (shouldSave)
+			{
+				ConsoleLog("Note: output file will be automatically overwritten next time you launch the application.");
+
+				textMirror?.Flush();
+				textMirror?.Close();
+			}
+
+			_ = Console.ReadLine();
+		}
 	}
 
 	/// <summary>
@@ -198,6 +237,7 @@ public partial class Calculator
 				{
 					ConsoleLog($"Steam API says that the object is a Workshop collection containing {itemsId.GetArrayLength()} items.");
 					ConsoleLog("Starting computation...");
+					ConsoleLog();
 
 					foreach (var itemId in itemsId.EnumerateArray())
 					{
