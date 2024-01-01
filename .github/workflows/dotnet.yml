@@ -19,7 +19,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ matrix.dotnet }}
     - name: Restore dependencies
@@ -33,7 +33,7 @@ jobs:
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r linux-x64 --nologo --self-contained
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r linux-arm64 --nologo --self-contained
     - name: Upload Linux Builds
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: github.event_name == 'push'
       with:
         name: linux-builds-dotnet-${{ matrix.dotnet }}
@@ -45,7 +45,7 @@ jobs:
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r osx-x64 --nologo --self-contained
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r osx-arm64 --nologo --self-contained
     - name: Upload OSX Builds
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: github.event_name == 'push'
       with:
         name: osx-builds-dotnet-${{ matrix.dotnet }}
@@ -57,7 +57,7 @@ jobs:
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r win-x64 --nologo --self-contained
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r win-arm64 --nologo --self-contained
     - name: Upload Windows Builds
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: github.event_name == 'push'
       with:
         name: windows-builds-dotnet-${{ matrix.dotnet }}
