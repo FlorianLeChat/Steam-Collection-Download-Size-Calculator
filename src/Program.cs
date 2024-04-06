@@ -345,38 +345,36 @@ public partial class Calculator
 				if (response.TryGetProperty("publishedfiledetails", out var fileInfo))
 				{
 					var totalSize = 0L;
-					var arrayItems = fileInfo.EnumerateArray();
 					var currentItem = 1;
-					IEnumerable<JsonElement>? sortedItems = null;
+					IEnumerable<JsonElement> arrayItems = fileInfo.EnumerateArray();
+
+					arrayItems = arrayItems.Where(itemInfo =>
+					{
+						// Remove all unreachable or deleted items.
+						return itemInfo.TryGetProperty("result", out var result) && result.ToString() == "1";
+					});
 
 					if (order == "ASC")
 					{
 						// Ascending sorting.
-						sortedItems = arrayItems.OrderBy(itemInfo => long.Parse(itemInfo.GetProperty("file_size").ToString()));
+						arrayItems = arrayItems.OrderBy(itemInfo => long.Parse(itemInfo.GetProperty("file_size").ToString()));
 					}
 					else if (order == "DESC")
 					{
 						// Descending sorting.
-						sortedItems = arrayItems.OrderByDescending(itemInfo => long.Parse(itemInfo.GetProperty("file_size").ToString()));
+						arrayItems = arrayItems.OrderByDescending(itemInfo => long.Parse(itemInfo.GetProperty("file_size").ToString()));
 					}
-	
-					foreach (var itemInfo in (sortedItems ?? arrayItems))
+
+					foreach (var itemInfo in arrayItems)
 					{
+						// Show details of each item.
+						var itemSize = long.Parse(itemInfo.GetProperty("file_size").ToString());
+						var itemTitle = itemInfo.GetProperty("title").ToString();
 						var consoleOutput = $"({currentItem}/{index}) {itemInfo.GetProperty("publishedfileid"),-10} :";
 
-						if (itemInfo.TryGetProperty("title", out var title))
-						{
-							var itemSize = long.Parse(itemInfo.GetProperty("file_size").ToString());
+						ConsoleLog($"{consoleOutput} {itemTitle} [{BytesToString(itemSize)}]");
 
-							ConsoleLog($"{consoleOutput} {title} [{BytesToString(itemSize)}]");
-
-							totalSize += itemSize;
-						}
-						else
-						{
-							ConsoleLog($"{consoleOutput} ERROR -> OBJECT IS HIDDEN OR UNAVAILABLE");
-						}
-
+						totalSize += itemSize;
 						currentItem++;
 					}
 
