@@ -8,7 +8,7 @@ public partial class Calculator
 	private static bool shouldSave;
 	private static string order = "none";
 	private static TextWriter? textMirror = null;
-	private static List<string> retrievedItems = new();
+	private static List<string> retrievedItems = [];
 	private static readonly HttpClient httpClient = new();
 
 	/// <summary>
