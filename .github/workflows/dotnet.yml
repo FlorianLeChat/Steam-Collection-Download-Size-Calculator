@@ -7,6 +7,7 @@ on:
     branches: [ master ]
   schedule:
     - cron: 0 6 * * 1
+  workflow_dispatch:
 
 jobs:
   build:
@@ -34,7 +35,7 @@ jobs:
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r linux-arm64 --nologo --self-contained
     - name: Upload Linux Builds
       uses: actions/upload-artifact@v4
-      if: github.event_name == 'push'
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       with:
         name: linux-builds-dotnet-${{ matrix.dotnet }}
         path: |
@@ -46,7 +47,7 @@ jobs:
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r osx-arm64 --nologo --self-contained
     - name: Upload OSX Builds
       uses: actions/upload-artifact@v4
-      if: github.event_name == 'push'
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       with:
         name: osx-builds-dotnet-${{ matrix.dotnet }}
         path: |
@@ -58,7 +59,7 @@ jobs:
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r win-arm64 --nologo --self-contained
     - name: Upload Windows Builds
       uses: actions/upload-artifact@v4
-      if: github.event_name == 'push'
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       with:
         name: windows-builds-dotnet-${{ matrix.dotnet }}
         path: |
