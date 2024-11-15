@@ -12,3 +12,15 @@ updates:
       dependencies:
         patterns:
           - "*"
+
+  # Maintain dependencies for npm
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      # Check for updates managed by npm once a month
+      interval: "monthly"
+    groups:
+      # Group together all dependencies in a single pull request
+      dependencies:
+        patterns:
+          - "*"
