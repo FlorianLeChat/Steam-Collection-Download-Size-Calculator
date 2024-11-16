@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        dotnet: [ "6.x", "7.x", "8.x" ]
+        dotnet: [ "8.x", "9.x" ]
       fail-fast: false
     steps:
     - name: Checkout code
@@ -39,8 +39,8 @@ jobs:
       with:
         name: linux-builds-dotnet-${{ matrix.dotnet }}
         path: |
-          ${{ github.workspace }}/src/bin/Release/net8.0/linux-x64/publish/
-          ${{ github.workspace }}/src/bin/Release/net8.0/linux-arm64/publish/
+          ${{ github.workspace }}/src/bin/Release/net9.0/linux-x64/publish/
+          ${{ github.workspace }}/src/bin/Release/net9.0/linux-arm64/publish/
     - name: Publish OSX (arm64/x64)
       run: |
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r osx-x64 --nologo --self-contained
@@ -51,8 +51,8 @@ jobs:
       with:
         name: osx-builds-dotnet-${{ matrix.dotnet }}
         path: |
-          ${{ github.workspace }}/src/bin/Release/net8.0/osx-x64/publish/
-          ${{ github.workspace }}/src/bin/Release/net8.0/osx-arm64/publish/
+          ${{ github.workspace }}/src/bin/Release/net9.0/osx-x64/publish/
+          ${{ github.workspace }}/src/bin/Release/net9.0/osx-arm64/publish/
     - name: Publish Windows (arm64/x64)
       run: |
         dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r win-x64 --nologo --self-contained
@@ -63,5 +63,5 @@ jobs:
       with:
         name: windows-builds-dotnet-${{ matrix.dotnet }}
         path: |
-          ${{ github.workspace }}/src/bin/Release/net8.0/win-x64/publish/
-          ${{ github.workspace }}/src/bin/Release/net8.0/win-arm64/publish/
+          ${{ github.workspace }}/src/bin/Release/net9.0/win-x64/publish/
+          ${{ github.workspace }}/src/bin/Release/net9.0/win-arm64/publish/
