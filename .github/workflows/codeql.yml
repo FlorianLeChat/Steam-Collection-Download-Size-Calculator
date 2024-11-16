@@ -24,6 +24,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -34,10 +38,6 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore -f ${{ matrix.framework }}
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
