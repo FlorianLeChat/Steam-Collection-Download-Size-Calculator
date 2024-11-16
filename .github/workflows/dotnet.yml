@@ -23,6 +23,8 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ matrix.dotnet }}
+    - name: List installed SDKs
+      run: dotnet --list-sdks
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -31,37 +33,37 @@ jobs:
       run: dotnet test --no-build --verbosity normal
     - name: Publish Linux (arm64/x64)
       run: |
-        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r linux-x64 --nologo --self-contained
-        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r linux-arm64 --nologo --self-contained
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -f net${{ matrix.dotnet:0:1 }}.0 -r linux-x64 --nologo --self-contained
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -f net${{ matrix.dotnet:0:1 }}.0 -r linux-arm64 --nologo --self-contained
     - name: Upload Linux Builds
       uses: actions/upload-artifact@v4
       if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       with:
         name: linux-builds-dotnet-${{ matrix.dotnet }}
         path: |
-          ${{ github.workspace }}/src/bin/Release/net9.0/linux-x64/publish/
-          ${{ github.workspace }}/src/bin/Release/net9.0/linux-arm64/publish/
+          ${{ github.workspace }}/src/bin/Release/net${{ matrix.dotnet:0:1 }}.0/linux-x64/publish/
+          ${{ github.workspace }}/src/bin/Release/net${{ matrix.dotnet:0:1 }}.0/linux-arm64/publish/
     - name: Publish OSX (arm64/x64)
       run: |
-        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r osx-x64 --nologo --self-contained
-        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r osx-arm64 --nologo --self-contained
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -f net${{ matrix.dotnet:0:1 }}.0 -r osx-x64 --nologo --self-contained
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -f net${{ matrix.dotnet:0:1 }}.0 -r osx-arm64 --nologo --self-contained
     - name: Upload OSX Builds
       uses: actions/upload-artifact@v4
       if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       with:
         name: osx-builds-dotnet-${{ matrix.dotnet }}
         path: |
-          ${{ github.workspace }}/src/bin/Release/net9.0/osx-x64/publish/
-          ${{ github.workspace }}/src/bin/Release/net9.0/osx-arm64/publish/
+          ${{ github.workspace }}/src/bin/Release/net${{ matrix.dotnet:0:1 }}.0/osx-x64/publish/
+          ${{ github.workspace }}/src/bin/Release/net${{ matrix.dotnet:0:1 }}.0/osx-arm64/publish/
     - name: Publish Windows (arm64/x64)
       run: |
-        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r win-x64 --nologo --self-contained
-        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -r win-arm64 --nologo --self-contained
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -f net${{ matrix.dotnet:0:1 }}.0 -r win-x64 --nologo --self-contained
+        dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -f net${{ matrix.dotnet:0:1 }}.0 -r win-arm64 --nologo --self-contained
     - name: Upload Windows Builds
       uses: actions/upload-artifact@v4
       if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       with:
         name: windows-builds-dotnet-${{ matrix.dotnet }}
         path: |
-          ${{ github.workspace }}/src/bin/Release/net9.0/win-x64/publish/
-          ${{ github.workspace }}/src/bin/Release/net9.0/win-arm64/publish/
+          ${{ github.workspace }}/src/bin/Release/net${{ matrix.dotnet:0:1 }}.0/win-x64/publish/
+          ${{ github.workspace }}/src/bin/Release/net${{ matrix.dotnet:0:1 }}.0/win-arm64/publish/
