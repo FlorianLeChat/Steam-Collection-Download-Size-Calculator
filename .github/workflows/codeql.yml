@@ -19,6 +19,7 @@ jobs:
     strategy:
       matrix:
         language: [ csharp ]
+        framework: [ "net8.0", "net9.0" ]
       fail-fast: false
     steps:
     - name: Checkout repository
@@ -27,8 +28,12 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
+    - name: List installed SDKs
+      run: dotnet --list-sdks
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore -f ${{ matrix.framework }}
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
