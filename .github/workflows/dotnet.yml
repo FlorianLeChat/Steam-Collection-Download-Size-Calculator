@@ -39,7 +39,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       with:
-        name: linux-builds-dotnet-${{ matrix.dotnet }}
+        name: linux-builds-${{ matrix.framework }}
         path: |
           ${{ github.workspace }}/src/bin/Release/${{ matrix.framework }}/linux-x64/publish/
           ${{ github.workspace }}/src/bin/Release/${{ matrix.framework }}/linux-arm64/publish/
@@ -51,7 +51,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       with:
-        name: osx-builds-dotnet-${{ matrix.dotnet }}
+        name: osx-builds-${{ matrix.framework }}
         path: |
           ${{ github.workspace }}/src/bin/Release/${{ matrix.framework }}/osx-x64/publish/
           ${{ github.workspace }}/src/bin/Release/${{ matrix.framework }}/osx-arm64/publish/
@@ -63,7 +63,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
       with:
-        name: windows-builds-dotnet-${{ matrix.dotnet }}
+        name: windows-builds-${{ matrix.framework }}
         path: |
           ${{ github.workspace }}/src/bin/Release/${{ matrix.framework }}/win-x64/publish/
           ${{ github.workspace }}/src/bin/Release/${{ matrix.framework }}/win-arm64/publish/
