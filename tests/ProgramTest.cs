@@ -1,6 +1,7 @@
+using SteamCollectionDownloadSizeCalculator;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace SteamCollectionDownloadSizeCalculator.Tests;
+namespace SteamCollectionDownloadSizeCalculatorTests;
 
 [TestClass]
 public class CalculatorTests
