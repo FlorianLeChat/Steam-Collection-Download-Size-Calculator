@@ -18,7 +18,7 @@ jobs:
       security-events: write
     strategy:
       matrix:
-        language: [ csharp ]
+        language: [ csharp, actions ]
         framework: [ "net8.0", "net9.0" ]
       fail-fast: false
     steps:
