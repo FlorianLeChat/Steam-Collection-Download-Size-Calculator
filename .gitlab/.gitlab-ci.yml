@@ -1,0 +1,38 @@
+stages:
+    - test
+    - publish
+
+default:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    cache:
+        key:
+            files:
+                - src/SteamCollectionDownloadSizeCalculator.csproj
+                - tests/SteamCollectionDownloadSizeCalculatorTests.csproj
+        paths:
+            - .nuget/packages/
+        policy: pull-push
+
+variables:
+    FRAMEWORK: net10.0
+    OUTPUT_DIR: publish/$FRAMEWORK/$RUNTIME/
+    PROJECT_DIR: src/SteamCollectionDownloadSizeCalculator.csproj
+    BUILD_CONFIG: Release
+
+test:
+    stage: test
+    script:
+        - dotnet test -c $BUILD_CONFIG --verbosity normal -f $FRAMEWORK
+
+publish:
+    stage: publish
+    parallel:
+        matrix:
+            - RUNTIME: ["linux-x64", "linux-arm64", "osx-x64", "osx-arm64", "win-x64", "win-arm64"]
+    script:
+        - dotnet publish $PROJECT_DIR -c $BUILD_CONFIG -f $FRAMEWORK -r $RUNTIME -o $OUTPUT_DIR --nologo --self-contained
+    artifacts:
+        name: $RUNTIME
+        paths:
+            - $OUTPUT_DIR
+        expire_in: 1 hour
