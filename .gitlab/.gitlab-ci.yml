@@ -4,17 +4,9 @@ stages:
 
 default:
     image: mcr.microsoft.com/dotnet/sdk:10.0
-    cache:
-        key:
-            files:
-                - src/SteamCollectionDownloadSizeCalculator.csproj
-                - tests/SteamCollectionDownloadSizeCalculatorTests.csproj
-        paths:
-            - .nuget/packages/
-        policy: pull-push
 
 variables:
-    OUTPUT_DIR: publish/$FRAMEWORK/$RUNTIME/
+    OUTPUT_DIR: publish/$RUNTIME/
 
 test:
     stage: test
@@ -29,7 +21,6 @@ publish:
     script:
         - dotnet publish src/SteamCollectionDownloadSizeCalculator.csproj -c Release -f net10.0 -r $RUNTIME -o $OUTPUT_DIR --nologo --self-contained
     artifacts:
-        name: $RUNTIME
         paths:
             - $OUTPUT_DIR
         expire_in: 1 hour
