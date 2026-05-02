@@ -1,5 +1,6 @@
 stages:
     - test
+    - analyze
     - publish
 
 default:
@@ -8,12 +9,25 @@ default:
 variables:
     OUTPUT_DIR: publish/$RUNTIME/
 
-test:
+test:dotnet:
     stage: test
     script:
         - dotnet test tests/SteamCollectionDownloadSizeCalculatorTests.csproj -c Release --verbosity normal -f net10.0
 
-publish:
+analyze:sast:
+    stage: analyze
+    image: $CI_TEMPLATE_REGISTRY_HOST/security-products/semgrep
+    script:
+        - /analyzer run
+    artifacts:
+        access: developer
+        paths:
+            - gl-sast-report.json
+        reports:
+            sast: gl-sast-report.json
+        expire_in: 1 hour
+
+publish:dotnet:
     stage: publish
     parallel:
         matrix:
